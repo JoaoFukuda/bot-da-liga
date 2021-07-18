@@ -9,33 +9,36 @@ from collections import Counter
 
 load_dotenv()
 TOKEN = getenv("TOKEN")
-GUILD = "Sistemas de Informação - EACH-USP"
-
-frases = []
+GUILD_ID = 817460102495338536
+CHANNEL_ID = 835667584288423956
 
 class ShrekBot(discord.Client):
-    async def on_ready(self):
-        print(f'Connected to discord as {bot.user}')
+    frases = []
+
+    async def carregar_frases(self):
         for guild in self.guilds:
-            if guild.id == 817460102495338536:
-                for tc in guild.text_channels:
-                    if tc.id == 835667584288423956:
-                        async for message in tc.history(limit=None):
-                            frases.append(message)
+            if guild.id == GUILD_ID:
+                for text_channels in guild.text_channels:
+                    if text_channels.id == CHANNEL_ID:
+                        async for frase in text_channels.history(limit=None):
+                            self.frases.append(frase)
+
+    async def on_ready(self):
+        await self.carregar_frases()
 
     async def on_message(self, message):
-        if message.channel.id == 835667584288423956:
-            frases.append(message)
+        if message.channel.id == CHANNEL_ID:
+            self.frases.append(message)
         else:
-            if message.guild.id == 817460102495338536 and message.content == 'manda':
+            if message.guild.id == GUILD_ID and message.content == 'manda':
                 mentions = []
-                for frase in frases:
+                for frase in self.frases:
                     for mention in frase.mentions:
                         mentions.append(mention.name)
-                message_to_send = ""
+                leaderboard = ""
                 for name, num in Counter(mentions).most_common():
-                    message_to_send += f'{name}: {num}\n'
-                await message.channel.send(message_to_send)
+                    leaderboard += f'{name}: {num}\n'
+                await message.channel.send(leaderboard)
 
 bot = ShrekBot()
 bot.run(TOKEN)
